@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cstdio>
 #include <chrono>
-#include <thread>
+#include <string>
 
 bool graphicsInit();
 bool audioInit();
@@ -23,19 +23,58 @@ const int K_SCREEN_HEIGHT = 32;
 const int X_SCALE = 10;
 const int Y_SCALE = 10;
 
+float gDelay = 1000/400.0f;
+
 bool gQuit = false;
 
 Chip8 gEmu;
 
 int main(int argc, char* args[])
 {
+    
+    //Checking arguments
+    if (argc == 1)
+    {
+        std::cout << "Missing arguments.\nUsage: \'chip8emu path_to_a_game.ch8\'\n";
+        std::getchar();
+        return 1;
+    }
+
+    //Calculate delay
+    if (argc > 2)
+    {
+        try
+        {
+            int argument = std::stoi(std::string(args[2]));
+            if (argument <= 0)
+            {
+                std::cout << "The number mustn't be equal or lower than 0.";
+                std::getchar();
+                return 1;
+            }
+            gDelay = 1000.0f/argument;
+        }
+        catch(std::invalid_argument& e)
+        {
+            std::cout << "No conversion found for 'operations per second' number! Please use non-decimal number without characters.";
+            std::getchar();
+            return 1;
+        }
+        catch(std::out_of_range& e)
+        {
+            std::cout << "The 'operations per second' number is too large or too small.";
+            std::getchar();
+            return 1;
+        }
+    }
+
     //SDL init
     graphicsInit();
     audioInit();
 
     //Chip8 init
     gEmu.init();
-    gEmu.loadGame("invaders.ch8");
+    gEmu.loadGame(args[1]);
 
     std::chrono::system_clock::time_point a = std::chrono::system_clock::now();
     std::chrono::system_clock::time_point b = std::chrono::system_clock::now();
@@ -44,16 +83,15 @@ int main(int argc, char* args[])
     while (!gQuit)
     {
 
-        // Maintain designated frequency of 5 Hz (200 ms per frame)
-            a = std::chrono::system_clock::now();
-            std::chrono::duration<double, std::milli> work_time = a - b;
+        a = std::chrono::system_clock::now();
+        std::chrono::duration<double, std::milli> work_time = a - b;
 
-            if (work_time.count() < 1000/400.0f)
-            {
-                std::chrono::duration<double, std::milli> delta_ms(1000/400.0f - work_time.count());
-                auto delta_ms_duration = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ms);
-                SDL_Delay(delta_ms_duration.count());
-            }
+        if (work_time.count() < gDelay)
+        {
+            std::chrono::duration<double, std::milli> delta_ms(gDelay - work_time.count());
+            auto delta_ms_duration = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ms);
+            SDL_Delay(delta_ms_duration.count());
+        }
 
         gEmu.emulateCycle();
 
@@ -66,7 +104,6 @@ int main(int argc, char* args[])
             }
             else if (gE.type == SDL_KEYDOWN)
             {
-                std::cout << "KEY";
                 switch (gE.key.keysym.sym)
                 {
                     case SDLK_1:
@@ -181,7 +218,6 @@ int main(int argc, char* args[])
         }
         b = std::chrono::system_clock::now();
         std::chrono::duration<double, std::milli> sleep_time = b - a;
-        //printf("Time: %f \n", (work_time + sleep_time).count());
     }
 
     close();

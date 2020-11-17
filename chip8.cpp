@@ -368,6 +368,7 @@ bool Chip8::loadGame(std::string path)
     if (pF == NULL)
     {
         std::cout << "There was an error while loading the game!\n";
+        std::getchar();
         return 1;
     }
 
