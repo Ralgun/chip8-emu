@@ -1,3 +1,2 @@
 Simply drag and drop a file you want to open or open cmd and write:
 'chip8emu.exe path/to/the/game.ch8'
-You can also specify the number of operation per second at the end of the command!
